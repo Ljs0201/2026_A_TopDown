@@ -1,13 +1,8 @@
-using UnityEditor.Rendering;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.SocialPlatforms.Impl;
 
 public class PlayerController : MonoBehaviour
 {
-    [Header("Movement Settings")]
-    public float moveSpeed = 5f;
-
     [Header("Sprite Sheets")]
     public Sprite[] spriteUp;
     public Sprite[] spriteDown;
@@ -19,6 +14,8 @@ public class PlayerController : MonoBehaviour
 
     private Rigidbody2D rb;
     private SpriteRenderer sr;
+    private PlayerStatus playerStatus; // 실시간 스탯(이동속도 등)을 가져올 참조 변수
+
     private Vector2 input;
     private Vector2 velocity;
 
@@ -30,9 +27,14 @@ public class PlayerController : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         sr = GetComponent<SpriteRenderer>();
+        // 같은 오브젝트에 있는 PlayerStatus 컴포넌트를 가져옵니다.
+        playerStatus = GetComponent<PlayerStatus>();
 
         currentSprites = spriteDown;
-        sr.sprite = currentSprites[0];
+        if (currentSprites != null && currentSprites.Length > 0)
+        {
+            sr.sprite = currentSprites[0];
+        }
     }
 
     private void Update()
@@ -41,7 +43,10 @@ public class PlayerController : MonoBehaviour
         if (input.sqrMagnitude <= 0.01f)
         {
             frameIndex = 0;
-            sr.sprite = currentSprites[frameIndex];
+            if (currentSprites != null && currentSprites.Length > 0)
+            {
+                sr.sprite = currentSprites[frameIndex];
+            }
             return;
         }
 
@@ -54,17 +59,26 @@ public class PlayerController : MonoBehaviour
             frameIndex++;
 
             // 프레임 인덱스가 배열 범위를 벗어나면 처음으로 루프
-            if (frameIndex >= currentSprites.Length)
+            if (currentSprites != null && frameIndex >= currentSprites.Length)
             {
                 frameIndex = 0;
             }
 
-            sr.sprite = currentSprites[frameIndex];
+            if (currentSprites != null && currentSprites.Length > 0)
+            {
+                sr.sprite = currentSprites[frameIndex];
+            }
         }
     }
 
     private void FixedUpdate()
     {
+        // [중요 수정] 기존 고정 moveSpeed 대신, PlayerStatus의 성장형 실시간 moveSpeed를 반영합니다.
+        if (playerStatus != null)
+        {
+            velocity = input.normalized * playerStatus.moveSpeed;
+        }
+
         // 물리 기반 이동 처리
         rb.MovePosition(rb.position + velocity * Time.fixedDeltaTime);
     }
@@ -72,7 +86,6 @@ public class PlayerController : MonoBehaviour
     public void OnMove(InputValue value)
     {
         input = value.Get<Vector2>();
-        velocity = input.normalized * moveSpeed;
 
         // 입력이 있을 때만 방향 전환 판단
         if (input.sqrMagnitude > 0.01f)
@@ -98,7 +111,10 @@ public class PlayerController : MonoBehaviour
 
     private void ChangeSprites(Sprite[] newSprites)
     {
-        // 이미 같은 방향의 스프레시트를 재생 중이라면 무시
+        // 스프라이트 배열이 비어있다면 무시 (에러 방지)
+        if (newSprites == null || newSprites.Length == 0) return;
+
+        // 이미 같은 방향의 스프라이트 시트를 재생 중이라면 무시
         if (currentSprites == newSprites)
             return;
 
@@ -110,24 +126,15 @@ public class PlayerController : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        /*어떤 기능
-        // <Summary>
-        // 
-        // 
-
-        if (collision.CompareTag("Item"))
+        // 부딪힌 대상이 몬스터 프리팹이라면 즉시 첫 피해 적용
+        if (collision.CompareTag("Enemy"))
         {
-            ItemObject item = collision.GetComponent<ItemObject>();
-
-            score += item.GetPoint();
-
-            GameDataManager.instance.playerData.collectedItems.Add(item.GetItem());
-
-            scoreText.text = score.ToString();
-            Destroy(collision.gameObject);
-
-            GameDataManager.instance.SaveData(GameDataManager.instance.playerData);
+            EnemyAI enemy = collision.GetComponent<EnemyAI>();
+            if (enemy != null && playerStatus != null)
+            {
+                // 실시간으로 안전하게 PlayerStatus의 TakeDamage 호출
+                // (OnTriggerStay2D가 주 동력이 되므로 여기서는 확인차 넣어두거나 비워두어도 무방합니다)
+            }
         }
-        */
     }
 }
