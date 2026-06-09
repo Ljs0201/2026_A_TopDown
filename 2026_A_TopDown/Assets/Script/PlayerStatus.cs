@@ -74,6 +74,12 @@ public class PlayerStatus : MonoBehaviour
         magnetRange += 0.02f;
 
         Debug.LogWarning($"★ LEVEL UP! 현재 레벨: {currentLevel} ★");
+
+        // ★ [연동 추가] 레벨업하는 순간 일시정지하며 랜덤 스킬 선택창을 화면에 오픈합니다!
+        if (LevelUpMenu.Instance != null)
+        {
+            LevelUpMenu.Instance.ShowLevelUpMenu();
+        }
     }
 
     public void TakeDamage(float damage)
