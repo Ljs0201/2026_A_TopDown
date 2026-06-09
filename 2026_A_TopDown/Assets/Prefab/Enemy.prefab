@@ -172,3 +172,4 @@ MonoBehaviour:
   speed: 0.5
   damage: 5
   attackCooldown: 1
+  hp: 10

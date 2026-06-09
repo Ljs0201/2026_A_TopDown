@@ -3,16 +3,22 @@ using UnityEngine;
 public class EnemyAI : MonoBehaviour
 {
     [Header("--- Enemy Stats ---")]
-    [SerializeField] private float speed = 0.5f;       // 기획안 슬라임 속도
-    [SerializeField] private float damage = 5f;        // 기획안 슬라임 공격력 (5)
-    [SerializeField] private float attackCooldown = 1f; // 공격 주기 (1초에 한 번씩 공격)
+    [SerializeField] private float speed = 0.5f;
+    [SerializeField] private float damage = 5f;
+    [SerializeField] private float attackCooldown = 1f;
+
+    // ★ 다른 UI나 프리팹 없이 오직 순수 체력 데이터만 추가!
+    public float maxHp = 30f;
+    private float hp;
 
     private Transform playerTransform;
     private float attackTimer = 0f;
 
     void Start()
     {
-        // "Player" 태그를 가진 오브젝트를 스스로 추적
+        // 게임 시작 시 현재 체력을 최대 체력으로 초기화
+        hp = maxHp;
+
         GameObject player = GameObject.FindWithTag("Player");
         if (player != null)
         {
@@ -22,13 +28,11 @@ public class EnemyAI : MonoBehaviour
 
     void Update()
     {
-        // 공격 쿨타임 타이머 진행
         if (attackTimer > 0)
         {
             attackTimer -= Time.deltaTime;
         }
 
-        // 플레이어 추적 이동
         if (playerTransform != null)
         {
             Vector3 direction = (playerTransform.position - transform.position).normalized;
@@ -41,27 +45,49 @@ public class EnemyAI : MonoBehaviour
         }
     }
 
-    // [핵심] 몬스터가 플레이어에게 대미지를 주는 물리 충돌 이벤트
+    // 매직 애로우가 적을 적중시킬 때 호출하는 대미지 함수
+    public void TakeDamage(float amount)
+    {
+        hp -= amount;
+
+        // 피가 0 이하가 되면 사망
+        if (hp <= 0)
+        {
+            Die();
+        }
+    }
+
     private void OnTriggerStay2D(Collider2D collision)
     {
-        // 부딪힌 대상이 "Player" 태그를 가지고 있다면
         if (collision.CompareTag("Player"))
         {
-            // 공격 쿨타임이 끝났는지 확인
             if (attackTimer <= 0f)
             {
-                // 플레이어의 PlayerStatus 스크립트를 가져옴
                 PlayerStatus playerStatus = collision.GetComponent<PlayerStatus>();
-
                 if (playerStatus != null)
                 {
-                    // 기획안의 대미지(5)만큼 체력을 깎음
                     playerStatus.TakeDamage(damage);
-
-                    // 공격 타이머 리셋 (1초 동안 재공격 방지)
                     attackTimer = attackCooldown;
                 }
             }
         }
+    }
+
+    void Die()
+    {
+        // 플레이어에게 슬라임 처치 보상 경험치(10점) 지급
+        if (PlayerStatus.Instance != null)
+        {
+            PlayerStatus.Instance.GainExp(10f);
+        }
+
+        // UI 매니저의 킬 카운트 1 상승
+        if (UIManager.instance != null)
+        {
+            UIManager.instance.AddKill();
+        }
+
+        // 몬스터 오브젝트 파괴
+        Destroy(gameObject);
     }
 }
