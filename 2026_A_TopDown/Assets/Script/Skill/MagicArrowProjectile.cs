@@ -4,7 +4,7 @@ public class MagicArrowProjectile : MonoBehaviour
 {
     private Vector3 moveDirection;
     private float speed;
-    private float damage; // ★ 이 변수가 빠져있거나 위아래 이름이 달라서 에러가 났었습니다!
+    private float damage;
     private bool canRicochet;
     private int ricochetCount = 0;
 
@@ -33,8 +33,16 @@ public class MagicArrowProjectile : MonoBehaviour
             EnemyAI enemy = collision.GetComponent<EnemyAI>();
             if (enemy != null)
             {
-                // 변수 이름이 정확히 일치하므로 빨간 줄이 사라집니다.
                 enemy.TakeDamage(damage);
+
+                // ★ [핵심 추가] 매직 애로우(0번 인덱스)의 누적 데미지를 JSON 데이터에 실시간 기록
+                // 데이터 매니저가 존재하고 스킬 리스트가 정상적으로 생성되어 있는지 확인 후 더해줍니다.
+                if (GameDataManager.Instance != null && GameDataManager.Instance.saveData.skillSaveList.Count > 0)
+                {
+                    // 0번 슬롯(MagicArrow)의 accumulatedDamage에 현재 화살 데미지를 누적하고 저장!
+                    GameDataManager.Instance.saveData.skillSaveList[0].accumulatedDamage += damage;
+                    GameDataManager.Instance.SaveJsonData();
+                }
             }
 
             if (canRicochet && ricochetCount < 1)

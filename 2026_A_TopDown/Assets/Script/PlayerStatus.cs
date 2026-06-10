@@ -2,7 +2,6 @@ using UnityEngine;
 
 public class PlayerStatus : MonoBehaviour
 {
-    // 다른 스크립트(EnemyAI 등)에서 나를 부를 수 있도록 만든 싱글톤 변수
     public static PlayerStatus Instance;
 
     [Header("--- Level & EXP (기획안 공식 적용) ---")]
@@ -26,7 +25,6 @@ public class PlayerStatus : MonoBehaviour
         currentHp = maxHp;
         CalculateMaxExp();
 
-        // 시작할 때 UI 매니저를 통해 HP 바와 EXP 바를 함께 초기화합니다.
         if (UIManager.instance != null)
         {
             UIManager.instance.UpdateHPUI(currentHp, maxHp);
@@ -50,7 +48,6 @@ public class PlayerStatus : MonoBehaviour
             LevelUp();
         }
 
-        // [수정] 경험치를 먹을 때마다 실시간으로 UI 게이지와 숫자를 채워줍니다.
         if (UIManager.instance != null)
         {
             UIManager.instance.UpdateExpUI(currentExp, maxExp, currentLevel);
@@ -75,7 +72,7 @@ public class PlayerStatus : MonoBehaviour
 
         Debug.LogWarning($"★ LEVEL UP! 현재 레벨: {currentLevel} ★");
 
-        // ★ [연동 추가] 레벨업하는 순간 일시정지하며 랜덤 스킬 선택창을 화면에 오픈합니다!
+        // ★ [보안 연동] LevelUpMenu에서 알아서 만렙을 체크하고 켜지거나 패스합니다.
         if (LevelUpMenu.Instance != null)
         {
             LevelUpMenu.Instance.ShowLevelUpMenu();

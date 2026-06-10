@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
@@ -7,23 +7,22 @@ public class LevelUpMenu : MonoBehaviour
 {
     public static LevelUpMenu Instance;
 
-    // UI ·¹ÀÌ¾Æ¿ô¿¡ µé¾î°¥ ½ºÅ³º° °íÀ¯ Á¤º¸ ±¸Á¶Ã¼
     [System.Serializable]
     public struct SkillUIData
     {
-        public SkillData.SkillType type; // À¯Àú´ÔÀÌ ¸¸µç SkillDataÀÇ enum ¿¬µ¿
+        public SkillData.SkillType type;
         public string skillName;
         [TextArea] public string description;
         public Sprite skillIcon;
     }
 
-    [Header("--- 10°³ ½ºÅ³ Á¤º¸ ¼³Á¤ Ç®(Pool) ---")]
+    [Header("--- 10ê°œ ìŠ¤í‚¬ ì •ë³´ ì„¤ì • í’€(Pool) ---")]
     public List<SkillUIData> skillUIList = new List<SkillUIData>();
 
-    [Header("--- ÀÎ°ÔÀÓ¿¡ ¹èÄ¡µÈ ½ÇÁ¦ ½ºÅ³ ¿ÀºêÁ§Æ®µé ---")]
+    [Header("--- ì¸ê²Œì„ì— ë°°ì¹˜ëœ ì‹¤ì œ ìŠ¤í‚¬ ì˜¤ë¸Œì íŠ¸ë“¤ ---")]
     public List<SkillData> activeSkills = new List<SkillData>();
 
-    [Header("--- UI ÄÄÆ÷³ÍÆ® ¿¬°á Ã¢ ---")]
+    [Header("--- UI ì»´í¬ë„ŒíŠ¸ ì—°ê²° ì°½ ---")]
     public GameObject menuPanel;
     public Button[] choiceButtons = new Button[3];
     public TextMeshProUGUI[] nameTexts = new TextMeshProUGUI[3];
@@ -35,40 +34,60 @@ public class LevelUpMenu : MonoBehaviour
     void Awake()
     {
         Instance = this;
-        if (menuPanel != null) menuPanel.SetActive(false); // ½ÃÀÛÇÒ ¶© ¼û±è
+        if (menuPanel != null) menuPanel.SetActive(false);
     }
 
-    // PlayerStatus¿¡¼­ È£ÃâÇÏ´Â ÆË¾÷ ÇÔ¼ö
+    void Start()
+    {
+        SyncLevelsToActiveSkills();
+    }
+
     public void ShowLevelUpMenu()
     {
-        Time.timeScale = 0f; // °ÔÀÓ ¹°¸® ÀÏ½ÃÁ¤Áö
-        menuPanel.SetActive(true);
-
         selectedIndices.Clear();
         List<int> availableIndices = new List<int>();
 
-        // 10°³ ½ºÅ³ Ç®À» µ¹¸ç ¹è¿ï ¼ö ÀÖ´Â(5·¹º§ ¹Ì¸¸) ½ºÅ³ ÇÊÅÍ¸µ
+        int maxLvl = (GameDataManager.Instance != null && GameDataManager.Instance.gameSettingData != null)
+            ? GameDataManager.Instance.gameSettingData.maxSkillLevel : 5;
+
+        // 1. ë§Œë ™ì´ ì•„ë‹Œ ìŠ¤í‚¬ í›„ë³´êµ° ìˆ˜ì§‘
         for (int i = 0; i < skillUIList.Count; i++)
         {
-            SkillData matchSkill = activeSkills.Find(s => s.skillType == skillUIList[i].type);
-            if (matchSkill == null || matchSkill.currentLevel < 5)
+            int skillIndex = (int)skillUIList[i].type;
+            int currentLvl = 0;
+
+            if (GameDataManager.Instance != null && GameDataManager.Instance.saveData != null && GameDataManager.Instance.saveData.skillSaveList.Count > skillIndex)
+            {
+                currentLvl = GameDataManager.Instance.saveData.skillSaveList[skillIndex].level;
+            }
+
+            if (currentLvl < maxLvl)
             {
                 availableIndices.Add(i);
             }
         }
 
-        // ÈÄº¸±º Áß ·£´ıÀ¸·Î Áßº¹ ¾øÀÌ ÃÖ´ë 3°³ ÀÎµ¦½º ¼±ÅÃ
+        // â˜… [í•µì‹¬ ì¶”ê°€] ê³ ë¥¼ ìˆ˜ ìˆëŠ” ìŠ¤í‚¬ì´ 0ê°œë¼ë©´ (ëª¨ë“  ìŠ¤í‚¬ ë§Œë ™ ìƒí™©)
+        if (availableIndices.Count == 0)
+        {
+            Debug.LogWarning("ëª¨ë“  ìŠ¤í‚¬ì´ ì´ë¯¸ ìµœê³  ë ˆë²¨ì…ë‹ˆë‹¤. ìŠ¤í‚¬ ì„ íƒì°½ì„ ë„ìš°ì§€ ì•Šê³  ê²Œì„ì„ ì§„í–‰í•©ë‹ˆë‹¤.");
+            menuPanel.SetActive(false);
+            Time.timeScale = 1f; // ê²Œì„ ì •ì§€ ì—†ì´ ì¦‰ì‹œ í•´ì œ ë° ì¬ìƒ
+            return;
+        }
+
+        // ì„ íƒì°½ì´ ì •ìƒì ìœ¼ë¡œ ëœ° ë•Œë§Œ ê²Œì„ì„ ì¼ì‹œì •ì§€í•˜ê³  íŒ¨ë„ì„ í™œì„±í™”í•©ë‹ˆë‹¤.
+        Time.timeScale = 0f;
+        menuPanel.SetActive(true);
+
+        // ëœë¤ 3ê°œ ì¶”ì¶œ
         int choicesCount = Mathf.Min(3, availableIndices.Count);
         while (selectedIndices.Count < choicesCount)
         {
             int randomIndex = availableIndices[Random.Range(0, availableIndices.Count)];
-            if (!selectedIndices.Contains(randomIndex))
-            {
-                selectedIndices.Add(randomIndex);
-            }
+            if (!selectedIndices.Contains(randomIndex)) selectedIndices.Add(randomIndex);
         }
 
-        // »ÌÈù 3°³ÀÇ ½ºÅ³ µ¥ÀÌÅÍ¸¦ ½ÇÁ¦ 3°³ UI ¼¼Æ®¿¡ ¹ÙÀÎµù
         for (int i = 0; i < 3; i++)
         {
             if (i < selectedIndices.Count)
@@ -77,24 +96,27 @@ public class LevelUpMenu : MonoBehaviour
                 int uiIndex = selectedIndices[i];
                 SkillUIData uiData = skillUIList[uiIndex];
 
-                // ÇöÀç ·¹º§À» Á¶È¸ÇÏ¿© ´ÙÀ½ ·¹º§ ¼öÄ¡¸¦ UI¿¡ Ç¥±â
-                SkillData matchSkill = activeSkills.Find(s => s.skillType == uiData.type);
-                int nextLevel = (matchSkill != null) ? matchSkill.currentLevel + 1 : 1;
+                int skillIndex = (int)uiData.type;
+                int currentLvl = 0;
+                if (GameDataManager.Instance != null && GameDataManager.Instance.saveData.skillSaveList.Count > skillIndex)
+                {
+                    currentLvl = GameDataManager.Instance.saveData.skillSaveList[skillIndex].level;
+                }
+                int nextLevel = currentLvl + 1;
 
-                nameTexts[i].text = $"{uiData.skillName} (LV.{nextLevel})";
+                nameTexts[i].text = uiData.skillName + " (LV." + nextLevel + ")";
                 descTexts[i].text = uiData.description;
+
                 if (iconImages[i] != null && uiData.skillIcon != null)
                 {
                     iconImages[i].sprite = uiData.skillIcon;
                 }
 
-                // ¹öÆ°ÀÇ ÀÌÀü ÀÌº¥Æ® ¸®½º³Ê¸¦ ºñ¿ì°í »õ ÇÔ¼ö µî·Ï
                 choiceButtons[i].onClick.RemoveAllListeners();
                 choiceButtons[i].onClick.AddListener(() => SelectSkill(uiData.type));
             }
             else
             {
-                // ¼±ÅÃÇÒ ¼ö ÀÖ´Â ½ºÅ³ÀÌ 3°³º¸´Ù Àû´Ù¸é ³²´Â ¹öÆ° ¿ÀºêÁ§Æ® ºñÈ°¼ºÈ­
                 choiceButtons[i].gameObject.SetActive(false);
             }
         }
@@ -102,16 +124,37 @@ public class LevelUpMenu : MonoBehaviour
 
     public void SelectSkill(SkillData.SkillType type)
     {
-        SkillData matchSkill = activeSkills.Find(s => s.skillType == type);
+        int skillIndex = (int)type;
 
-        if (matchSkill != null)
+        if (GameDataManager.Instance != null && GameDataManager.Instance.saveData != null)
         {
-            // ÀÎ°ÔÀÓ ½Ç½Ã°£ ½ºÅ³ ·¹º§ 1 Áõ°¡
-            matchSkill.currentLevel++;
-            Debug.LogWarning($"{type} ½ºÅ³ ·¹º§¾÷ ¿Ï·á! ÇöÀç ·¹º§: {matchSkill.currentLevel}");
+            if (GameDataManager.Instance.saveData.skillSaveList.Count > skillIndex)
+            {
+                GameDataManager.Instance.saveData.skillSaveList[skillIndex].level++;
+            }
+
+            SyncLevelsToActiveSkills();
+            GameDataManager.Instance.SaveJsonData();
         }
 
-        menuPanel.SetActive(false); // ¼±ÅÃÃ¢ ´İ±â
-        Time.timeScale = 1f;        // °ÔÀÓ ½Ã°£ Á¤»ó Àç°³
+        menuPanel.SetActive(false);
+        Time.timeScale = 1f;
+    }
+
+    private void SyncLevelsToActiveSkills()
+    {
+        if (GameDataManager.Instance == null || GameDataManager.Instance.saveData == null) return;
+
+        foreach (SkillData skill in activeSkills)
+        {
+            if (skill == null) continue;
+            int skillIndex = (int)skill.skillType;
+
+            if (GameDataManager.Instance.saveData.skillSaveList.Count > skillIndex)
+            {
+                skill.currentLevel = GameDataManager.Instance.saveData.skillSaveList[skillIndex].level;
+                Debug.Log($"[{skill.skillType}] ì´ë¦„ ë§¤ì¹­ ë™ê¸°í™” ì™„ë£Œ â¡ï¸ LV.{skill.currentLevel}");
+            }
+        }
     }
 }
