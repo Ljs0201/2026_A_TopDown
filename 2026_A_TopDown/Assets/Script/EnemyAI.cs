@@ -14,6 +14,18 @@ public class EnemyAI : MonoBehaviour
     private Transform playerTransform;
     private float attackTimer = 0f;
 
+    // --- 스턴 관련 변수 ---
+    private bool isStunned = false;
+    private float stunTimer = 0f;
+
+    // 애니메이터 대신 컴포넌트 없이 타격감을 줄 스프라이트 렌더러
+    private SpriteRenderer spriteRenderer;
+
+    void Awake()
+    {
+        spriteRenderer = GetComponent<SpriteRenderer>();
+    }
+
     void Start()
     {
         // 게임 시작 시 현재 체력을 최대 체력으로 초기화
@@ -28,6 +40,19 @@ public class EnemyAI : MonoBehaviour
 
     void Update()
     {
+        // ★ [스턴 체크] 스턴 상태라면 타이머를 깎고 아래 이동/공격 로직을 전부 패스
+        if (isStunned)
+        {
+            stunTimer -= Time.deltaTime;
+            if (stunTimer <= 0f)
+            {
+                isStunned = false;
+                // 스턴이 풀리면 몬스터 색상을 원래대로(하얗게) 돌려놓습니다.
+                if (spriteRenderer != null) spriteRenderer.color = Color.white;
+            }
+            return; // 스턴 중일 때는 여기서 멈춤
+        }
+
         if (attackTimer > 0)
         {
             attackTimer -= Time.deltaTime;
@@ -45,7 +70,24 @@ public class EnemyAI : MonoBehaviour
         }
     }
 
-    // 매직 애로우가 적을 적중시킬 때 호출하는 대미지 함수
+    // ★ 낙뢰 스킬에서 호출할 스턴 적용 함수
+    public void ApplyStun(float duration)
+    {
+        isStunned = true;
+
+        if (duration > stunTimer)
+        {
+            stunTimer = duration;
+        }
+
+        // 낙뢰를 맞으면 몬스터를 약간 푸르스름하게(전기 충격 느낌) 물들입니다.
+        if (spriteRenderer != null)
+        {
+            spriteRenderer.color = new Color(0.5f, 0.7f, 1f);
+        }
+    }
+
+    // 매직 애로우나 낙뢰가 적을 적중시킬 때 호출하는 대미지 함수
     public void TakeDamage(float amount)
     {
         hp -= amount;
@@ -59,6 +101,9 @@ public class EnemyAI : MonoBehaviour
 
     private void OnTriggerStay2D(Collider2D collision)
     {
+        // 스턴 상태일 때는 플레이어와 비벼져도 공격이 들어가지 않음
+        if (isStunned) return;
+
         if (collision.CompareTag("Player"))
         {
             if (attackTimer <= 0f)
@@ -75,19 +120,16 @@ public class EnemyAI : MonoBehaviour
 
     void Die()
     {
-        // 플레이어에게 슬라임 처치 보상 경험치(10점) 지급
         if (PlayerStatus.Instance != null)
         {
             PlayerStatus.Instance.GainExp(10f);
         }
 
-        // UI 매니저의 킬 카운트 1 상승
         if (UIManager.instance != null)
         {
             UIManager.instance.AddKill();
         }
 
-        // 몬스터 오브젝트 파괴
         Destroy(gameObject);
     }
 }

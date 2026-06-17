@@ -67,20 +67,17 @@ public class LevelUpMenu : MonoBehaviour
             }
         }
 
-        // ★ [핵심 추가] 고를 수 있는 스킬이 0개라면 (모든 스킬 만렙 상황)
         if (availableIndices.Count == 0)
         {
             Debug.LogWarning("모든 스킬이 이미 최고 레벨입니다. 스킬 선택창을 띄우지 않고 게임을 진행합니다.");
             menuPanel.SetActive(false);
-            Time.timeScale = 1f; // 게임 정지 없이 즉시 해제 및 재생
+            Time.timeScale = 1f;
             return;
         }
 
-        // 선택창이 정상적으로 뜰 때만 게임을 일시정지하고 패널을 활성화합니다.
         Time.timeScale = 0f;
         menuPanel.SetActive(true);
 
-        // 랜덤 3개 추출
         int choicesCount = Mathf.Min(3, availableIndices.Count);
         while (selectedIndices.Count < choicesCount)
         {
@@ -122,6 +119,7 @@ public class LevelUpMenu : MonoBehaviour
         }
     }
 
+    // ★ [핵심 변경 및 연동 완료] 버튼을 눌렀을 때 실행되는 함수
     public void SelectSkill(SkillData.SkillType type)
     {
         int skillIndex = (int)type;
@@ -133,7 +131,40 @@ public class LevelUpMenu : MonoBehaviour
                 GameDataManager.Instance.saveData.skillSaveList[skillIndex].level++;
             }
 
+            // 1. 단순 레벨 수치 동기화 실행
             SyncLevelsToActiveSkills();
+
+            // 2. [추가] 인게임에 배치된 스킬 중, 방금 선택한 타입의 실체 오브젝트를 찾아서 특수 로직 가동
+            foreach (SkillData skill in activeSkills)
+            {
+                if (skill != null && skill.skillType == type)
+                {
+                    // 원소 구체(ElementalSphere) 타입이라면 내부 해금/구체생성 함수 호출
+                    if (type == SkillData.SkillType.ElementalSphere)
+                    {
+                        ElementalSphere sphere = skill as ElementalSphere;
+                        if (sphere != null)
+                        {
+                            // 인게임 레벨은 위에서 이미 Sync로 적용되었으므로, 잠금을 풀고 구체를 뽑아내기 위해 껍데기만 호출
+                            sphere.isUnlocked = true;
+                            // 1레벨(최초해금)이거나 레벨업 시 구체를 2개씩 더 생산하도록 연결
+                            if (sphere.currentLevel <= 4)
+                            {
+                                // 내부의 SpawnSpheres 기능 등을 직접 켜거나, 
+                                // UnlockOrLevelUp() 내부 조건을 우회하기 위해 인게임 전용 함수로 호출합니다.
+                                sphere.UnlockOrLevelUp();
+                            }
+                        }
+                    }
+                    // 만약 낙뢰(LightningStrike) 타입도 똑같이 관리 중이라면 잠금 해제 연동
+                    else if (type == SkillData.SkillType.LightningStrike)
+                    {
+                        LightningStrike lightning = skill as LightningStrike;
+                        if (lightning != null) lightning.isUnlocked = true;
+                    }
+                }
+            }
+
             GameDataManager.Instance.SaveJsonData();
         }
 

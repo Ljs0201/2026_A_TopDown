@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class SkillData : MonoBehaviour
 {
-    public enum SkillType { MagicArrow, ArcaneZone, ChainLightning }
+    public enum SkillType { MagicArrow, ArcaneZone, LightningStrike, ElementalSphere }
 
     [Header("--- 스킬 기본 설정 ---")]
     public SkillType skillType = SkillType.MagicArrow;

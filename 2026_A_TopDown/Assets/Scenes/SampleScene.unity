@@ -696,13 +696,14 @@ MonoBehaviour:
       \uB4F1)\uC744 \uB9C9\uC544\uB0B4\uB294 \uBC29\uC5B4\uC120 \uC5ED\uD560\uC744
       \uD569\uB2C8\uB2E4.\r\n"
     skillIcon: {fileID: 0}
-  - type: 0
-    skillName: 
-    description: 
+  - type: 2
+    skillName: "\uB099\uB8B0"
+    description: "\uAC15\uB825\uD55C \uBC88\uAC1C\uB4E4 \uB5A8\uC5B4\uB728\uB9BD\uB2C8\uB2E4"
     skillIcon: {fileID: 0}
-  - type: 0
-    skillName: 
-    description: 
+  - type: 3
+    skillName: "\uC6D0\uC18C \uAD6C\uCCB4"
+    description: "\uD50C\uB808\uC774\uC5B4 \uC8FC\uBCC0\uC744 \uD68C\uC804\uD558\uB294
+      \uB9C8\uBC95 \uAD6C\uCCB4"
     skillIcon: {fileID: 0}
   - type: 0
     skillName: 
@@ -731,6 +732,8 @@ MonoBehaviour:
   activeSkills:
   - {fileID: 420175749}
   - {fileID: 1242415180}
+  - {fileID: 1182258926}
+  - {fileID: 424975178}
   menuPanel: {fileID: 13420899}
   choiceButtons:
   - {fileID: 476605290}
@@ -828,6 +831,64 @@ MonoBehaviour:
   damage: 30
   attackInterval: 1
   arrowSpeed: 5
+--- !u!1 &424975177
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 424975179}
+  - component: {fileID: 424975178}
+  m_Layer: 0
+  m_Name: ElementalSphereSkill
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &424975178
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 424975177}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b86b3df9190ce94cb7c455fd8932598, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ElementalSphere
+  skillType: 3
+  currentLevel: 1
+  damage: 15
+  attackInterval: 1
+  arrowSpeed: 5
+  baseDamage: 10
+  damagePerLevel: 4
+  orbitRadius: 2.5
+  orbitSpeed: 150
+  explosionRadius: 2
+  explosionDamage: 40
+  explosionEffectPrefab: {fileID: 0}
+  spherePrefab: {fileID: 7357769935783164491, guid: c06dc9d6bed9a134c8c6e91e368a0859, type: 3}
+  isUnlocked: 0
+--- !u!4 &424975179
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 424975177}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &445230954
 GameObject:
   m_ObjectHideFlags: 0
@@ -2005,6 +2066,63 @@ MonoBehaviour:
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
+--- !u!1 &1182258924
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1182258925}
+  - component: {fileID: 1182258926}
+  m_Layer: 0
+  m_Name: LightningStrikeEffect
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1182258925
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1182258924}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 2, y: 2, z: 2}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1997604751}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1182258926
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1182258924}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 898e4419141a4244ea5cb1c17a7a0576, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LightningStrike
+  skillType: 2
+  currentLevel: 1
+  damage: 15
+  attackInterval: 1
+  arrowSpeed: 5
+  baseDamage: 15
+  damagePerLevel: 5
+  strikeInterval: 2
+  splashRadius: 0.5
+  stunDuration: 0.3
+  lightningEffectPrefab: {fileID: 6322433090000292327, guid: 6524c381de702f24fa2ffcf8a3348acb, type: 3}
+  effectDestroyTime: 0.5
+  isUnlocked: 1
 --- !u!1 &1242415179
 GameObject:
   m_ObjectHideFlags: 0
@@ -3468,6 +3586,7 @@ Transform:
   - {fileID: 519420032}
   - {fileID: 420175747}
   - {fileID: 1242415183}
+  - {fileID: 1182258925}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1997604752
@@ -3821,6 +3940,63 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 3650638188812647480, guid: a2a060732547fe64581bb0cb3c2bdf1d, type: 3}
   m_PrefabInstance: {fileID: 92025069}
   m_PrefabAsset: {fileID: 0}
+--- !u!1001 &3886283863381444591
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4764300983006352723, guid: c06dc9d6bed9a134c8c6e91e368a0859, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4764300983006352723, guid: c06dc9d6bed9a134c8c6e91e368a0859, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4764300983006352723, guid: c06dc9d6bed9a134c8c6e91e368a0859, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4764300983006352723, guid: c06dc9d6bed9a134c8c6e91e368a0859, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4764300983006352723, guid: c06dc9d6bed9a134c8c6e91e368a0859, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4764300983006352723, guid: c06dc9d6bed9a134c8c6e91e368a0859, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4764300983006352723, guid: c06dc9d6bed9a134c8c6e91e368a0859, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4764300983006352723, guid: c06dc9d6bed9a134c8c6e91e368a0859, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4764300983006352723, guid: c06dc9d6bed9a134c8c6e91e368a0859, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4764300983006352723, guid: c06dc9d6bed9a134c8c6e91e368a0859, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7357769935783164491, guid: c06dc9d6bed9a134c8c6e91e368a0859, type: 3}
+      propertyPath: m_Name
+      value: OrbitSphereChild
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: c06dc9d6bed9a134c8c6e91e368a0859, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -3834,3 +4010,5 @@ SceneRoots:
   - {fileID: 562089649}
   - {fileID: 216185925}
   - {fileID: 1955214588}
+  - {fileID: 3886283863381444591}
+  - {fileID: 424975179}
