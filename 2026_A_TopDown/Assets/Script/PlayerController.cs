@@ -3,137 +3,156 @@ using UnityEngine.InputSystem;
 
 public class PlayerController : MonoBehaviour
 {
-    [Header("Sprite Sheets")]
-    public Sprite[] spriteUp;
-    public Sprite[] spriteDown;
-    public Sprite[] spriteLeft;
-    public Sprite[] spriteRight;
-
-    [Header("Animation Settings")]
-    public float frameTime = 0.15f;
-
     private Rigidbody2D rb;
+    private PlayerStatus playerStatus;
+    private Animator animator;
     private SpriteRenderer sr;
-    private PlayerStatus playerStatus; // 실시간 스탯(이동속도 등)을 가져올 참조 변수
 
     private Vector2 input;
     private Vector2 velocity;
 
-    private Sprite[] currentSprites;
-    private int frameIndex = 0;
-    private float timer = 0f;
+    // 캐릭터가 마지막으로 바라본 가로 방향 (기본값: 오른쪽 = 1f)
+    private float lastNonZeroX = 1f;
+
+    [Header("Auto Attack Settings")]
+    public float detectRange = 5f; // 자동으로 적을 탐지할 범위
+
+    [Header("Magic Arrow Settings")]
+    public GameObject magicArrowPrefab;
+    public float arrowSpeed = 8f;
+    public float arrowDamage = 15f;
 
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
-        sr = GetComponent<SpriteRenderer>();
-        // 같은 오브젝트에 있는 PlayerStatus 컴포넌트를 가져옵니다.
         playerStatus = GetComponent<PlayerStatus>();
-
-        currentSprites = spriteDown;
-        if (currentSprites != null && currentSprites.Length > 0)
-        {
-            sr.sprite = currentSprites[0];
-        }
+        animator = GetComponent<Animator>();
+        sr = GetComponent<SpriteRenderer>();
     }
 
     private void Update()
     {
-        // 입력이 없을 때 (정지 상태) 애니메이션을 첫 프레임으로 고정
-        if (input.sqrMagnitude <= 0.01f)
+        bool isMoving = input.sqrMagnitude > 0.01f;
+        animator.SetBool("isMoving", isMoving);
+
+        if (isMoving)
         {
-            frameIndex = 0;
-            if (currentSprites != null && currentSprites.Length > 0)
-            {
-                sr.sprite = currentSprites[frameIndex];
-            }
-            return;
+            animator.SetFloat("MoveX", input.x);
+            animator.SetFloat("MoveY", input.y);
+
+            lastNonZeroX = input.x;
+            sr.flipX = (input.x < 0);
         }
 
-        // 애니메이션 타이머 진행
-        timer += Time.deltaTime;
-
-        if (timer >= frameTime)
+        // 스페이스 바를 누르면 자동 조준 공격 시도
+        if (Input.GetKeyDown(KeyCode.Space))
         {
-            timer = 0f;
-            frameIndex++;
-
-            // 프레임 인덱스가 배열 범위를 벗어나면 처음으로 루프
-            if (currentSprites != null && frameIndex >= currentSprites.Length)
-            {
-                frameIndex = 0;
-            }
-
-            if (currentSprites != null && currentSprites.Length > 0)
-            {
-                sr.sprite = currentSprites[frameIndex];
-            }
+            Attack();
         }
     }
 
     private void FixedUpdate()
     {
-        // [중요 수정] 기존 고정 moveSpeed 대신, PlayerStatus의 성장형 실시간 moveSpeed를 반영합니다.
         if (playerStatus != null)
         {
             velocity = input.normalized * playerStatus.moveSpeed;
         }
-
-        // 물리 기반 이동 처리
         rb.MovePosition(rb.position + velocity * Time.fixedDeltaTime);
     }
 
     public void OnMove(InputValue value)
     {
         input = value.Get<Vector2>();
+    }
 
-        // 입력이 있을 때만 방향 전환 판단
-        if (input.sqrMagnitude > 0.01f)
+    /// <summary>
+    /// 자동으로 가장 가까운 적을 찾아 그 방향으로 애니메이션을 재생하고 화살을 발사하는 함수
+    /// </summary>
+    public void Attack()
+    {
+        // 1. 범위 내의 모든 몬스터(Collider)들을 수색합니다.
+        Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(transform.position, detectRange);
+
+        Transform closestEnemy = null;
+        float closestDistance = Mathf.Infinity;
+
+        // 2. 검색된 오브젝트 중 "Enemy" 태그를 가진 가장 가까운 적을 찾습니다.
+        foreach (Collider2D enemyCollider in hitEnemies)
         {
-            // X축 이동량이 Y축 이동량보다 클 경우 (좌우 이동)
-            if (Mathf.Abs(input.x) > Mathf.Abs(input.y))
+            if (enemyCollider.CompareTag("Enemy"))
             {
-                if (input.x > 0)
-                    ChangeSprites(spriteRight);
-                else
-                    ChangeSprites(spriteLeft);
+                float distanceToEnemy = Vector2.Distance(transform.position, enemyCollider.transform.position);
+                if (distanceToEnemy < closestDistance)
+                {
+                    closestDistance = distanceToEnemy;
+                    closestEnemy = enemyCollider.transform;
+                }
             }
-            // Y축 이동량이 더 클 경우 (상하 이동)
-            else
+        }
+
+        // ★ [핵심 수정] 범위 안에 '적(closestEnemy)이 존재할 때만' 모든 공격 연산을 실행합니다!
+        if (closestEnemy != null)
+        {
+            // 플레이어에서 적을 향하는 방향 벡터 계산 후 정규화
+            Vector3 lookDirection = closestEnemy.position - transform.position;
+            Vector3 finalFireDirection = lookDirection.normalized;
+
+            if (lookDirection.x != 0)
             {
-                if (input.y > 0)
-                    ChangeSprites(spriteUp);
-                else
-                    ChangeSprites(spriteDown);
+                // 공격한 방향을 마지막 가로 방향으로 기억
+                lastNonZeroX = lookDirection.x;
+
+                // 애니메이터의 블렌드 트리 좌표를 적이 있는 방향(X, Y)으로 강제 갱신
+                animator.SetFloat("MoveX", lookDirection.x);
+                animator.SetFloat("MoveY", lookDirection.y);
             }
+
+            // 적을 바라보게 되었으므로 이미지 뒤집기 적용
+            sr.flipX = (lastNonZeroX < 0);
+
+            // ★ 적이 있을 때만 애니메이터의 공격 트리거 발동!
+            animator.SetTrigger("doAttack");
+
+            // ★ 적이 있을 때만 매직 애로우 투사체 생성 및 발사!
+            if (magicArrowPrefab != null)
+            {
+                GameObject arrowObj = Instantiate(magicArrowPrefab, transform.position, Quaternion.identity);
+                MagicArrowProjectile arrowScript = arrowObj.GetComponent<MagicArrowProjectile>();
+
+                if (arrowScript != null)
+                {
+                    bool isMaxLevel = false;
+                    if (GameDataManager.Instance != null && GameDataManager.Instance.saveData.skillSaveList.Count > 0)
+                    {
+                        int currentLevel = GameDataManager.Instance.saveData.skillSaveList[0].level;
+                        isMaxLevel = (currentLevel >= 5);
+                    }
+
+                    arrowScript.Setup(finalFireDirection, arrowSpeed, arrowDamage, isMaxLevel);
+                }
+            }
+        }
+        else
+        {
+            // 주변에 적이 없다면 로그를 찍고 아무 작업도 하지 않고 리턴합니다.
+            Debug.Log("사거리 내에 적이 없어 공격을 발동하지 않습니다.");
         }
     }
 
-    private void ChangeSprites(Sprite[] newSprites)
+    private void OnDrawGizmosSelected()
     {
-        // 스프라이트 배열이 비어있다면 무시 (에러 방지)
-        if (newSprites == null || newSprites.Length == 0) return;
-
-        // 이미 같은 방향의 스프라이트 시트를 재생 중이라면 무시
-        if (currentSprites == newSprites)
-            return;
-
-        currentSprites = newSprites;
-        frameIndex = 0;
-        timer = 0f;
-        sr.sprite = currentSprites[frameIndex];
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, detectRange);
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        // 부딪힌 대상이 몬스터 프리팹이라면 즉시 첫 피해 적용
         if (collision.CompareTag("Enemy"))
         {
             EnemyAI enemy = collision.GetComponent<EnemyAI>();
             if (enemy != null && playerStatus != null)
             {
-                // 실시간으로 안전하게 PlayerStatus의 TakeDamage 호출
-                // (OnTriggerStay2D가 주 동력이 되므로 여기서는 확인차 넣어두거나 비워두어도 무방합니다)
+                // 피격 처리 등
             }
         }
     }
