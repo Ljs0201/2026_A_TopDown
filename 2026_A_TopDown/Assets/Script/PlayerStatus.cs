@@ -15,6 +15,8 @@ public class PlayerStatus : MonoBehaviour
     public float currentHp;
     public float magnetRange = 0.64f;
 
+    private bool isDead = false; // ★ 중복 사망 및 사망 후 데미지 방지용 변수 추가
+
     void Awake()
     {
         Instance = this;
@@ -22,6 +24,15 @@ public class PlayerStatus : MonoBehaviour
 
     void Start()
     {
+        // ★ [영구 강화 스텟 반영] 기기에 저장된 레벨을 불러옵니다.
+        int savedHpLevel = PlayerPrefs.GetInt("Stat_HP_Level", 0);
+        int savedSpeedLevel = PlayerPrefs.GetInt("Stat_Speed_Level", 0);
+
+        // 기본 스텟에 (레벨 * 가중치)를 더해줍니다.
+        maxHp = 100f + (savedHpLevel * 20f);       // 1레벨당 최대 체력 +20 증가
+        moveSpeed = 1.2f + (savedSpeedLevel * 0.1f); // 1레벨당 이동속도 +0.1 증가
+
+        // 체력 초기화 및 UI 동기화
         currentHp = maxHp;
         CalculateMaxExp();
 
@@ -40,6 +51,8 @@ public class PlayerStatus : MonoBehaviour
 
     public void GainExp(float amount)
     {
+        if (isDead) return; // 이미 죽었다면 경험치 획득 불가
+
         currentExp += amount;
 
         while (currentExp >= maxExp)
@@ -72,7 +85,6 @@ public class PlayerStatus : MonoBehaviour
 
         Debug.LogWarning($"★ LEVEL UP! 현재 레벨: {currentLevel} ★");
 
-        // ★ [보안 연동] LevelUpMenu에서 알아서 만렙을 체크하고 켜지거나 패스합니다.
         if (LevelUpMenu.Instance != null)
         {
             LevelUpMenu.Instance.ShowLevelUpMenu();
@@ -81,6 +93,8 @@ public class PlayerStatus : MonoBehaviour
 
     public void TakeDamage(float damage)
     {
+        if (isDead) return; // ★ 이미 죽은 상태라면 데미지를 받지 않음
+
         currentHp -= damage;
 
         if (UIManager.instance != null)
@@ -97,7 +111,20 @@ public class PlayerStatus : MonoBehaviour
 
     private void GameOver()
     {
+        if (isDead) return;
+        isDead = true; // 사망 확정 처리
+
         Debug.LogError("게임 오버! 플레이어가 사망했습니다.");
-        Time.timeScale = 0f;
+        Time.timeScale = 0f; // 게임 일시정지
+
+        // ★ [핵심 추가] LobbyManager에 있는 게임 오버 UI 팝업을 띄웁니다!
+        if (LobbyManager.Instance != null)
+        {
+            LobbyManager.Instance.ShowGameOverUI();
+        }
+        else
+        {
+            Debug.LogWarning("[LobbyManager 경고] PlayScene 하이어라키 창에 LobbyManager 오브젝트가 배치되지 않았습니다!");
+        }
     }
 }
