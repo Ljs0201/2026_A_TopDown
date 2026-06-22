@@ -11,6 +11,9 @@ public class EnemyAI : MonoBehaviour
     public float maxHp = 30f;
     private float hp;
 
+    [Header("--- 영구 재화 전리품 세팅 ---")]
+    [SerializeField] private int creditReward = 5; // ★ 이 몬스터를 잡으면 줄 크레딧 양 (인스펙터에서 수정 가능)
+
     private Transform playerTransform;
     private float attackTimer = 0f;
 
@@ -20,6 +23,8 @@ public class EnemyAI : MonoBehaviour
 
     // 애니메이터 대신 컴포넌트 없이 타격감을 줄 스프라이트 렌더러
     private SpriteRenderer spriteRenderer;
+
+    private bool isDead = false; // 중복 사망 처리 방지용 변수
 
     void Awake()
     {
@@ -90,6 +95,8 @@ public class EnemyAI : MonoBehaviour
     // 매직 애로우나 낙뢰가 적을 적중시킬 때 호출하는 대미지 함수
     public void TakeDamage(float amount)
     {
+        if (isDead) return;
+
         hp -= amount;
 
         // 피가 0 이하가 되면 사망
@@ -120,6 +127,10 @@ public class EnemyAI : MonoBehaviour
 
     void Die()
     {
+        if (isDead) return;
+        isDead = true;
+
+        // 1. 기존 시스템 (경험치 및 킬수 추가)
         if (PlayerStatus.Instance != null)
         {
             PlayerStatus.Instance.GainExp(10f);
@@ -128,6 +139,17 @@ public class EnemyAI : MonoBehaviour
         if (UIManager.instance != null)
         {
             UIManager.instance.AddKill();
+        }
+
+        // ★ [핵심 추가] 크레딧 매니저를 호출하여 영구 보상 지급 및 기기 저장!
+        if (PermanentCreditManager.Instance != null)
+        {
+            PermanentCreditManager.Instance.AddCredits(creditReward);
+        }
+        else
+        {
+            // 하이어라키에 매니저 배치를 깜빡했다면 경고를 띄웁니다.
+            Debug.LogWarning("[PermanentCreditManager] 씬에 크레딧 매니저 오브젝트가 없습니다! 생성해 주세요.");
         }
 
         Destroy(gameObject);

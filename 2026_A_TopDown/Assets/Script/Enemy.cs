@@ -2,35 +2,52 @@ using UnityEngine;
 
 public class Enemy : MonoBehaviour
 {
-    public float originalSpeed = 1.0f; // 적의 원래 기본 이동속도
-    private float currentSpeed;
+    [Header("--- 몬스터 스텟 ---")]
+    public float maxHp = 50f;
+    private float currentHp;
+
+    [Header("--- 전리품 세팅 ---")]
+    public int creditReward = 10; // ★ 인스펙터창에서 이 숫자가 0이 아닌지 꼭 확인하세요!
+
+    private bool isDead = false;
 
     void Start()
     {
-        currentSpeed = originalSpeed;
+        currentHp = maxHp;
     }
 
-    void Update()
+    // 플레이어의 공격을 받을 때 호출되는 함수
+    public void TakeDamage(float damage)
     {
-        // 원래 이속 대신 currentSpeed 변수를 사용하여 플레이어를 추적하게 만드세요!
-        // transform.Translate(방향 * currentSpeed * Time.deltaTime);
+        if (isDead) return;
+
+        currentHp -= damage;
+        Debug.Log($"[몬스터 피격] 데미지: {damage} | 남은 체력: {currentHp}");
+
+        if (currentHp <= 0)
+        {
+            Die();
+        }
     }
 
-    // 아케인 존이 호출할 슬로우 버프 함수
-    public void ApplySlow(float multiplier)
+    void Die()
     {
-        currentSpeed = originalSpeed * multiplier; // 기본 속도의 50% 등으로 다운
-    }
+        if (isDead) return;
+        isDead = true;
 
-    // 장판 밖으로 나가면 속도 원상복구
-    public void RestoreSpeed()
-    {
-        currentSpeed = originalSpeed;
-    }
+        Debug.Log("<color=red>[몬스터 사망 진입]</color> 이제 크레딧 지급을 시도합니다.");
 
-    public void TakeDamage(float amount)
-    {
-        // 기존에 만들어두신 적 데미지 입는 로직을 여기에 연동하세요!
-        Debug.Log($"{gameObject.name}이 장판에 맞아 {amount}의 피해를 입음!");
+        // ★ 새로 만든 PermanentCreditManager를 호출합니다.
+        if (PermanentCreditManager.Instance != null)
+        {
+            PermanentCreditManager.Instance.AddCredits(creditReward);
+        }
+        else
+        {
+            // 하이어라키 창에 매니저 오브젝트를 만들지 않았다면 이 오류가 터집니다!
+            Debug.LogError("[오류] 하이어라키 창에 PermanentCreditManager 오브젝트가 없거나 스크립트가 안 붙어있습니다!");
+        }
+
+        Destroy(gameObject);
     }
 }
