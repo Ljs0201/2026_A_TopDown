@@ -82,7 +82,7 @@ public class GameDataManager : MonoBehaviour
         saveData.skillSaveList = new List<SkillSaveInfo>();
 
         string[] skillNames = {
-            "MagicArrow", "ArcaneZone", "FireBall", "Skill4", "Skill5",
+            "MagicArrow", "ArcaneZone", "LightningStrike", "ElementalSphereSkill", "Skill5",
             "Skill6", "Skill7", "Skill8", "Skill9", "Skill10"
         };
 

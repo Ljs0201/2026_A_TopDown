@@ -119,7 +119,6 @@ public class LevelUpMenu : MonoBehaviour
         }
     }
 
-    // ★ [핵심 변경 및 연동 완료] 버튼을 눌렀을 때 실행되는 함수
     public void SelectSkill(SkillData.SkillType type)
     {
         int skillIndex = (int)type;
@@ -134,29 +133,32 @@ public class LevelUpMenu : MonoBehaviour
             // 1. 단순 레벨 수치 동기화 실행
             SyncLevelsToActiveSkills();
 
-            // 2. [추가] 인게임에 배치된 스킬 중, 방금 선택한 타입의 실체 오브젝트를 찾아서 특수 로직 가동
+            // 2. 인게임에 배치된 스킬 중, 방금 선택한 타입의 실체 오브젝트를 찾아서 특수 로직 가동
             foreach (SkillData skill in activeSkills)
             {
                 if (skill != null && skill.skillType == type)
                 {
-                    // 원소 구체(ElementalSphere) 타입이라면 내부 해금/구체생성 함수 호출
+                    // 원소 구체(ElementalSphere) 타입 해금 및 이중 레벨업 버그 수정 완료
                     if (type == SkillData.SkillType.ElementalSphere)
                     {
                         ElementalSphere sphere = skill as ElementalSphere;
                         if (sphere != null)
                         {
-                            // 인게임 레벨은 위에서 이미 Sync로 적용되었으므로, 잠금을 풀고 구체를 뽑아내기 위해 껍데기만 호출
                             sphere.isUnlocked = true;
-                            // 1레벨(최초해금)이거나 레벨업 시 구체를 2개씩 더 생산하도록 연결
-                            if (sphere.currentLevel <= 4)
+
+                            if (sphere.currentLevel <= 5)
                             {
-                                // 내부의 SpawnSpheres 기능 등을 직접 켜거나, 
-                                // UnlockOrLevelUp() 내부 조건을 우회하기 위해 인게임 전용 함수로 호출합니다.
+                                // ★ [버그 해결 핵심] 
+                                // SyncLevelsToActiveSkills()에서 이미 타겟 레벨로 동기화가 끝났으므로,
+                                // sphere.UnlockOrLevelUp() 내부의 레벨업(++ 연산)과 충돌하여 2레벨이 뛰는 걸 막기 위해
+                                // 호출 직전에 임시로 레벨을 1 낮춰 상쇄시킵니다. 
+                                // 이렇게 하면 구체 개수도 정확한 레벨에 맞춰 초기화되고, 최종 수치도 1만 깔끔하게 오릅니다.
+                                sphere.currentLevel--;
                                 sphere.UnlockOrLevelUp();
                             }
                         }
                     }
-                    // 만약 낙뢰(LightningStrike) 타입도 똑같이 관리 중이라면 잠금 해제 연동
+                    // 낙뢰(LightningStrike) 타입 잠금 해제 연동
                     else if (type == SkillData.SkillType.LightningStrike)
                     {
                         LightningStrike lightning = skill as LightningStrike;

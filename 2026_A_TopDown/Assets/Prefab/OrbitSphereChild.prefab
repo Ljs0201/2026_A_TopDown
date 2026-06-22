@@ -11,8 +11,8 @@ GameObject:
   - component: {fileID: 4764300983006352723}
   - component: {fileID: 7592820814237434895}
   - component: {fileID: 6983172928042266180}
-  - component: {fileID: 1168494666850071711}
   - component: {fileID: 7719477544032891479}
+  - component: {fileID: 8652808551994372588}
   m_Layer: 0
   m_Name: OrbitSphereChild
   m_TagString: Untagged
@@ -83,28 +83,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b9ac8535781517842b6ff6e479e5b43b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::OrbitSphereChild
---- !u!95 &1168494666850071711
-Animator:
-  serializedVersion: 7
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7357769935783164491}
-  m_Enabled: 1
-  m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 639b2df495a41714184ba35caaa82d3d, type: 2}
-  m_CullingMode: 0
-  m_UpdateMode: 0
-  m_ApplyRootMotion: 0
-  m_LinearVelocityBlending: 0
-  m_StabilizeFeet: 0
-  m_AnimatePhysics: 0
-  m_WarningMessage: 
-  m_HasTransformHierarchy: 1
-  m_AllowConstantClipSamplingOptimization: 1
-  m_KeepAnimatorStateOnDisable: 0
-  m_WriteDefaultValuesOnDisable: 0
 --- !u!212 &7719477544032891479
 SpriteRenderer:
   serializedVersion: 2
@@ -164,3 +142,25 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 0
   m_SpriteSortPoint: 0
+--- !u!95 &8652808551994372588
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7357769935783164491}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 639b2df495a41714184ba35caaa82d3d, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0

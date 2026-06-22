@@ -8,6 +8,16 @@ public class ArcaneZone : SkillData
     public float damagePerLevel = 3f;
     public float damageInterval = 0.5f;
 
+    [Header("--- ★ 아케인 존 크기 세팅 (인스펙터 조절용) ---")]
+    [Tooltip("1레벨일 때 기본 크기 셀 개수 (기존: 3 -> 5로 기본 확장!)")]
+    public float baseCellCount = 5f;
+
+    [Tooltip("레벨업할 때마다 추가로 커질 셀 개수 (기존: 1 -> 1.5로 상향!)")]
+    public float cellPerLevel = 1.5f;
+
+    [Tooltip("1셀당 실제 크기 계수 (기존: 0.5)")]
+    public float cellSizeFactor = 0.5f;
+
 
     private float timer = 0f;
     private List<Collider2D> targetsInZone = new List<Collider2D>();
@@ -48,7 +58,7 @@ public class ArcaneZone : SkillData
             return;
         }
 
-        // ★ [핵심 수정] 1레벨 이상이 되었을 때, 딱 한 번만 오브젝트를 켜서 이펙트를 깨웁니다!
+        // 1레벨 이상이 되었을 때, 딱 한 번만 오브젝트를 켜서 이펙트를 깨웁니다!
         if (!isEffectActivated)
         {
             isEffectActivated = true;
@@ -56,9 +66,10 @@ public class ArcaneZone : SkillData
             if (circleCollider != null) circleCollider.enabled = true;
         }
 
-        // [기획안 공식 반영] 1cell = 0.5f 기준 / 레벨업 시 1cell씩 크기 증가
-        float cellCount = 3f + (currentLevel - 1) * 1.0f;
-        float finalScale = cellCount * 0.5f;
+        // ★ [인스펙터 연동 연산으로 수정] 
+        // 이제 인스펙터에서 입력한 값에 따라 실시간으로 크기가 결정됩니다.
+        float cellCount = baseCellCount + (currentLevel - 1) * cellPerLevel;
+        float finalScale = cellCount * cellSizeFactor;
 
         // Z축까지 3D 스케일 균등 조정하여 파티클 왜곡을 원천 차단합니다.
         transform.localScale = new Vector3(finalScale, finalScale, finalScale);
