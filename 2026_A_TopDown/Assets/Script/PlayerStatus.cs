@@ -36,6 +36,9 @@ public class PlayerStatus : MonoBehaviour
         currentHp = maxHp;
         CalculateMaxExp();
 
+        // ★ [핵심 수정] 새 게임이 켜질 때, 세이브 데이터 및 필드의 모든 스킬 정보를 완벽하게 밀어버립니다.
+        ResetAllSkillLevels();
+
         if (UIManager.instance != null)
         {
             UIManager.instance.UpdateHPUI(currentHp, maxHp);
@@ -114,10 +117,23 @@ public class PlayerStatus : MonoBehaviour
         if (isDead) return;
         isDead = true; // 사망 확정 처리
 
-        Debug.LogError("게임 오버! 플레이어가 사망했습니다.");
+        // 1. 몬스터 스포너의 난이도, 시간, 스폰량을 완전 초기화
+        if (EnemySpawner.Instance != null)
+        {
+            EnemySpawner.Instance.ResetSpawner();
+        }
+        else
+        {
+            Debug.LogWarning("[EnemySpawner 경고] 씬에 EnemySpawner 오브젝트가 없거나 싱글톤이 비어있습니다.");
+        }
+
+        // 죽는 순간에도 안전하게 데이터 리셋 호출
+        ResetAllSkillLevels();
+
+        Debug.LogError("게임 오버! 플레이어가 사망했습니다. 모든 인게임 스킬 레벨이 리셋됩니다.");
         Time.timeScale = 0f; // 게임 일시정지
 
-        // ★ [핵심 추가] LobbyManager에 있는 게임 오버 UI 팝업을 띄웁니다!
+        // 2. LobbyManager에 있는 게임 오버 UI 팝업을 띄웁니다.
         if (LobbyManager.Instance != null)
         {
             LobbyManager.Instance.ShowGameOverUI();
@@ -125,6 +141,55 @@ public class PlayerStatus : MonoBehaviour
         else
         {
             Debug.LogWarning("[LobbyManager 경고] PlayScene 하이어라키 창에 LobbyManager 오브젝트가 배치되지 않았습니다!");
+        }
+    }
+
+    /// <summary>
+    /// ★ [수정완료] 외부 세이브 파일 데이터와 씬의 컴포넌트들을 일괄 격파하여 초기화하고 비주얼을 숨깁니다.
+    /// </summary>
+    private void ResetAllSkillLevels()
+    {
+        // 1. 레벨업 선택 메뉴를 통해 JSON 세이브 정보를 정비 (매직 애로우=1, 나머지=0)
+        if (LevelUpMenu.Instance != null)
+        {
+            LevelUpMenu.Instance.ResetSaveDataSkills();
+        }
+
+        // 2. 씬에 살아 움직이는 실제 SkillData 컴포넌트들을 수집합니다.
+        SkillData[] allSceneSkills = Object.FindObjectsByType<SkillData>(FindObjectsSortMode.None);
+
+        if (allSceneSkills != null && allSceneSkills.Length > 0)
+        {
+            foreach (SkillData skill in allSceneSkills)
+            {
+                if (skill == null) continue;
+
+                // 세이브 파일 데이터 원본 기준으로 씬 오브젝트 레벨 재동기화
+                if (GameDataManager.Instance != null && GameDataManager.Instance.saveData != null)
+                {
+                    int skillIndex = (int)skill.skillType;
+                    if (GameDataManager.Instance.saveData.skillSaveList.Count > skillIndex)
+                    {
+                        skill.currentLevel = GameDataManager.Instance.saveData.skillSaveList[skillIndex].level;
+                    }
+                }
+
+                // ★ [비주얼 숨김 방어 코드] 레벨이 0이 된 아케인존 등 미해금 스킬은 오브젝트를 강제로 꺼서 이펙트를 숨깁니다.
+                if (skill.currentLevel <= 0)
+                {
+                    skill.gameObject.SetActive(false);
+                    Debug.Log($"<color=orange><b>[스킬 숨김]</b></color> {skill.skillType}이 0레벨이므로 오브젝트를 비활성화했습니다.");
+                }
+                else
+                {
+                    // 1레벨인 매직 애로우 등은 확실하게 활성화시킵니다.
+                    skill.gameObject.SetActive(true);
+                }
+            }
+        }
+        else
+        {
+            Debug.LogWarning("[스킬 리셋 경고] 현재 씬에서 SkillData 컴포넌트를 단 하나도 찾지 못했습니다.");
         }
     }
 }

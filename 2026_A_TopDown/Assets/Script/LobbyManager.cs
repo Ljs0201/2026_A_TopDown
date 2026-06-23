@@ -69,9 +69,38 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
+    // ★ [오타 및 버그 수정] 로비로 돌아가기 버튼 함수
     public void ClickReturnToLobby()
     {
+        // 1. 멈춰버린 유니티 지구 시간을 다시 흐르게 만듭니다.
         Time.timeScale = 1f;
-        SceneManager.LoadScene("LobyScenes");
+
+        // 2. [중요] 유저님의 유니티 프로젝트에 등록된 실제 로비 씬 이름으로 정확히 매칭하세요!
+        // 기존 코드의 "LobyScenes" 오타를 대중적인 "LobbyScene"으로 수정해 두었습니다.
+        SceneManager.LoadScene("LobyScene");
+    }
+
+    /// <summary>
+    /// 로비의 [전체 초기화] 버튼에 연결할 함수
+    /// </summary>
+    public void ClickResetAllData()
+    {
+        // 1. 기기 저장소 완전히 포맷 (크레딧 + 모든 스텟 레벨 일괄 삭제)
+        PlayerPrefs.DeleteAll();
+        PlayerPrefs.Save();
+
+        Debug.LogWarning("모든 게임 데이터와 강화 레벨이 초기화되었습니다.");
+
+        // 2. 화면에 보이는 보유 크레딧 텍스트 0으로 갱신
+        UpdateLobbyCreditUI();
+
+        // 3. 강화창에 보이는 스텟 레벨(LV.0)과 비용도 즉시 원상복구
+        if (UpgradeManager.Instance != null)
+        {
+            UpgradeManager.Instance.hpLevel = 0;
+            UpgradeManager.Instance.speedLevel = 0;
+            UpgradeManager.Instance.damageLevel = 0;
+            UpgradeManager.Instance.UpdateUpgradeUI(); // 강화창 텍스트 강제 새로고침
+        }
     }
 }

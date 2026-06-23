@@ -42,6 +42,36 @@ public class LevelUpMenu : MonoBehaviour
         SyncLevelsToActiveSkills();
     }
 
+    // ★ [수정완료] 매직 애로우는 1레벨, 나머지는 0레벨로 JSON 세이브 데이터를 초기화합니다.
+    public void ResetSaveDataSkills()
+    {
+        if (GameDataManager.Instance != null && GameDataManager.Instance.saveData != null && GameDataManager.Instance.saveData.skillSaveList != null)
+        {
+            for (int i = 0; i < GameDataManager.Instance.saveData.skillSaveList.Count; i++)
+            {
+                SkillData.SkillType currentType = (SkillData.SkillType)i;
+
+                // 매직 애로우(MagicArrow)만 1레벨 시작, 나머지는 0레벨(미해금)로 세팅
+                if (currentType == SkillData.SkillType.MagicArrow)
+                {
+                    GameDataManager.Instance.saveData.skillSaveList[i].level = 1;
+                }
+                else
+                {
+                    GameDataManager.Instance.saveData.skillSaveList[i].level = 0;
+                }
+            }
+
+            // 변경된 상태를 JSON 파일로 저장
+            GameDataManager.Instance.SaveJsonData();
+
+            // 실제 월드에 배치된 스킬 컴포넌트들의 레벨도 동기화
+            SyncLevelsToActiveSkills();
+
+            Debug.Log("<color=cyan><b>[JSON 데이터 초기화]</b></color> 매직 애로우=LV.1 / 나머지 스킬=LV.0 초기화 완료.");
+        }
+    }
+
     public void ShowLevelUpMenu()
     {
         selectedIndices.Clear();
@@ -138,6 +168,13 @@ public class LevelUpMenu : MonoBehaviour
             {
                 if (skill != null && skill.skillType == type)
                 {
+                    // ★ [핵심 추가] 선택해서 레벨이 1 이상이 된 스킬 오브젝트는 비주얼(이펙트)을 위해 즉시 활성화합니다.
+                    if (skill.currentLevel > 0 && !skill.gameObject.activeSelf)
+                    {
+                        skill.gameObject.SetActive(true);
+                        Debug.Log($"<color=lime><b>[스킬 해금 및 활성화]</b></color> {skill.skillType} 오브젝트가 켜졌습니다.");
+                    }
+
                     // 원소 구체(ElementalSphere) 타입 해금 및 이중 레벨업 버그 수정 완료
                     if (type == SkillData.SkillType.ElementalSphere)
                     {
@@ -148,11 +185,6 @@ public class LevelUpMenu : MonoBehaviour
 
                             if (sphere.currentLevel <= 5)
                             {
-                                // ★ [버그 해결 핵심] 
-                                // SyncLevelsToActiveSkills()에서 이미 타겟 레벨로 동기화가 끝났으므로,
-                                // sphere.UnlockOrLevelUp() 내부의 레벨업(++ 연산)과 충돌하여 2레벨이 뛰는 걸 막기 위해
-                                // 호출 직전에 임시로 레벨을 1 낮춰 상쇄시킵니다. 
-                                // 이렇게 하면 구체 개수도 정확한 레벨에 맞춰 초기화되고, 최종 수치도 1만 깔끔하게 오릅니다.
                                 sphere.currentLevel--;
                                 sphere.UnlockOrLevelUp();
                             }
@@ -164,6 +196,7 @@ public class LevelUpMenu : MonoBehaviour
                         LightningStrike lightning = skill as LightningStrike;
                         if (lightning != null) lightning.isUnlocked = true;
                     }
+                    // 아케인존(ArcaneZone) 또는 기타 스킬 추가 확장 필요 시 여기에 추가 가능
                 }
             }
 
